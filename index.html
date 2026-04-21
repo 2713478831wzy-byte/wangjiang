@@ -98,6 +98,31 @@
             font-size: 0.9em;
             margin-top: 10px;
         }
+
+        /* 生日当天祝福样式 */
+        .birthday-bless {
+            font-size: 28px;
+            font-weight: bold;
+            color: #ff2222;
+            text-align: center;
+            padding: 20px 0;
+            text-shadow: 0 0 10px #ff6666;
+        }
+
+        /* 预览按钮 */
+        .preview-btn {
+            background: #ffd700;
+            color: #000;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin-top: 8px;
+            font-size: 14px;
+        }
+        .preview-btn:hover {
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
@@ -107,7 +132,7 @@
     </div>
 
     <script>
-        // 你的家人数据（已按你给的信息写好，不用修改）
+        // 你的家人数据
         const familyData = [
             { name: "妈妈", lunarMonth: 1, lunarDay: 15 },
             { name: "吴媛媛", solarMonth: 1, solarDay: 15, solar: true },
@@ -123,12 +148,14 @@
             { name: "张连连", solarMonth: 12, solarDay: 27, solar: true }
         ];
 
-        // 阴历转阳历（自动计算下一次生日，兼容闰月简化处理，不影响倒计时）
+        // 全局预览标记
+        let previewId = null;
+
+        // 阴历转阳历
         function getNextSolarBirthday(person) {
             const now = new Date();
             const currentYear = now.getFullYear();
 
-            // 阳历生日直接计算
             if (person.solar) {
                 let birthday = new Date(currentYear, person.solarMonth - 1, person.solarDay);
                 if (birthday < now) {
@@ -137,7 +164,6 @@
                 return birthday;
             }
 
-            // 阴历生日（简化转换，误差在1-2天内，不影响倒计时）
             const lunarOffset = [15, 14, 15, 15, 16, 15, 16, 15, 16, 15, 15, 15];
             let month = person.lunarMonth;
             let day = person.lunarDay + lunarOffset[month - 1];
@@ -159,7 +185,17 @@
             return birthday;
         }
 
-        // 计算倒计时（精确到秒）
+        // 判断是否是今天
+        function isBirthdayToday(targetDate) {
+            const today = new Date();
+            return (
+                targetDate.getDate() === today.getDate() &&
+                targetDate.getMonth() === today.getMonth() &&
+                targetDate.getFullYear() === today.getFullYear()
+            );
+        }
+
+        // 计算倒计时
         function getCountdown(targetDate) {
             const now = new Date();
             const diff = targetDate - now;
@@ -173,19 +209,22 @@
             return { days, hours, minutes, seconds };
         }
 
-        // 渲染列表（按距离生日天数排序）
+        // 渲染列表
         function renderList() {
             const list = document.getElementById("birthdayList");
             list.innerHTML = "";
 
-            const peopleWithBirthday = familyData.map(person => {
+            const peopleWithBirthday = familyData.map((person, index) => {
                 const birthday = getNextSolarBirthday(person);
                 const daysAway = Math.floor((birthday - new Date()) / (1000 * 60 * 60 * 24));
-                return { ...person, birthday, daysAway };
+                return { ...person, birthday, daysAway, index };
             }).sort((a, b) => a.daysAway - b.daysAway);
 
             peopleWithBirthday.forEach(person => {
+                const isToday = isBirthdayToday(person.birthday);
+                const isPreview = previewId === person.name;
                 const countdown = getCountdown(person.birthday);
+
                 const card = document.createElement("div");
                 card.className = "card";
 
@@ -193,12 +232,11 @@
                     ? `阳历 ${person.solarMonth}月${person.solarDay}日`
                     : `阴历 ${person.lunarMonth}月${person.lunarDay}日`;
 
-                card.innerHTML = `
-                    <div class="name">${person.name}</div>
-                    <div class="info">
-                        <span>${dateText}</span>
-                        <span>下一次: ${person.birthday.getFullYear()}年${person.birthday.getMonth() + 1}月${person.birthday.getDate()}日</span>
-                    </div>
+                let centerHtml = "";
+                if (isToday || isPreview) {
+                    centerHtml = `<div class="birthday-bless">🎉 祝${person.name}生日快乐！ 🎉</div>`;
+                } else {
+                    centerHtml = `
                     <div class="countdown">
                         <div class="time-unit">
                             <div class="time-value">${countdown.days}</div>
@@ -217,13 +255,34 @@
                             <div class="time-label">秒</div>
                         </div>
                     </div>
+                    `;
+                }
+
+                card.innerHTML = `
+                    <div class="name">${person.name}</div>
+                    <div class="info">
+                        <span>${dateText}</span>
+                        <span>下一次: ${person.birthday.getFullYear()}年${person.birthday.getMonth() + 1}月${person.birthday.getDate()}日</span>
+                    </div>
+                    ${centerHtml}
                     <div class="days-away">还有 ${person.daysAway} 天</div>
+                    <button class="preview-btn" onclick="previewBless('${person.name}')">预览生日效果</button>
                 `;
                 list.appendChild(card);
             });
         }
 
-        // 每秒更新一次倒计时
+        // 预览祝福
+        window.previewBless = function (name) {
+            previewId = name;
+            renderList();
+            setTimeout(() => {
+                previewId = null;
+                renderList();
+            }, 3000);
+        }
+
+        // 启动
         renderList();
         setInterval(renderList, 1000);
     </script>
