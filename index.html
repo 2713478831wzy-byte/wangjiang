@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>家人生日倒计时</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box;font-family:"Microsoft YaHei",sans-serif}
+        body{background:linear-gradient(135deg,#1a1a2e,#16213e);color:#fff;min-height:100vh;padding:20px}
+        .container{max-width:800px;margin:0 auto}
+        h1{text-align:center;margin:30px 0;color:#ffd700;text-shadow:0 0 10px rgba(255,215,0,.5)}
+        .card{background:rgba(255,255,255,.1);border-radius:15px;padding:20px;margin:15px 0;backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.1);transition:transform .3s ease}
+        .card:hover{transform:translateY(-5px);box-shadow:0 10px 30px rgba(0,0,0,.3)}
+        .name{font-size:1.3em;font-weight:700;color:#ffd700;margin-bottom:10px}
+        .info{display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:15px}
+        .info span{background:rgba(255,255,255,.1);padding:5px 10px;border-radius:5px;font-size:.9em}
+        .countdown{display:flex;justify-content:space-around;text-align:center}
+        .time-unit{background:rgba(255,215,0,.2);padding:10px;border-radius:10px;min-width:60px}
+        .time-value{font-size:1.5em;font-weight:700;color:#ffd700}
+        .time-label{font-size:.8em;color:#ccc}
+        .days-away{text-align:right;color:#88ff88;font-size:.9em;margin-top:10px}
+        
+        /* 生日当天红色大字样式 */
+        .happy-birthday{
+            text-align:center;
+            color:#ff3333;
+            font-size:2.2em;
+            font-weight:bold;
+            text-shadow:0 0 15px #ff6666;
+            padding:20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎂 家人生日倒计时 🎂</h1>
+        <div id="box"></div>
+    </div>
+
+<script src="https://cdn.jsdelivr.net/npm/lunar-javascript@1.2.11/dist/lunar.min.js"></script>
+<script>
+const list = [
+  { name:"妈妈", type:"lunar", month:1, day:15 },
+  { name:"吴媛媛", type:"solar", month:1, day:15 },
+  { name:"吴小飞", type:"solar", month:2, day:17 },
+  { name:"张珊珊", type:"lunar", month:6, day:6 },
+  { name:"周诣泽", type:"solar", month:6, day:18 },
+  { name:"王子阳", type:"lunar", month:8, day:13 },
+  { name:"王明", type:"lunar", month:9, day:2 },
+  { name:"周诣诺", type:"solar", month:10, day:5 },
+  { name:"张南南", type:"lunar", month:10, day:10 },
+  { name:"周超杰", type:"lunar", month:11, day:18 },
+  { name:"吴逸晨", type:"solar", month:12, day:25 },
+  { name:"张连连", type:"solar", month:12, day:27 }
+];
+
+function getNext(p){
+  const now = new Date();
+  const cy = now.getFullYear();
+  let birthday;
+  if(p.type === "solar"){
+    birthday = new Date(cy, p.month-1, p.day);
+  }else{
+    const lunar = Lunar.fromYmd(cy, p.month, p.day);
+    birthday = lunar.getSolar().toDate();
+  }
+  if(birthday < now){
+    if(p.type === "solar"){
+      birthday = new Date(cy+1, p.month-1, p.day);
+    }else{
+      const lunar = Lunar.fromYmd(cy+1, p.month, p.day);
+      birthday = lunar.getSolar().toDate();
+    }
+  }
+  return birthday;
+}
+
+function isBirthdayToday(date){
+  const today = new Date();
+  return date.getFullYear() === today.getFullYear()
+      && date.getMonth() === today.getMonth()
+      && date.getDate() === today.getDate();
+}
+
+function calc(end){
+  const d = end - new Date();
+  if(d<=0) return [0,0,0,0];
+  const day = Math.floor(d/86400000);
+  const h = Math.floor((d%86400000)/3600000);
+  const m = Math.floor((d%3600000)/60000);
+  const s = Math.floor((d%60000)/1000);
+  return [day,h,m,s];
+}
+
+function show(){
+  const arr = list.map(item=>{
+    const date = getNext(item);
+    const today = isBirthdayToday(date);
+    const [day,h,m,s] = calc(date);
+    return { ...item, date, today, day, h, m, s, total:day*86400+h*3600+m*60+s };
+  }).sort((a,b)=>a.total-b.total);
+  
+  const box = document.getElementById("box");
+  box.innerHTML = arr.map(i=>`
+    <div class="card">
+      <div class="name">${i.name}</div>
+      <div class="info">
+        <span>${i.type==="lunar"?"阴历":"阳历"} ${i.month}月${i.day}日</span>
+        <span>下一次：${i.date.getFullYear()}-${(i.date.getMonth()+1+"").padStart(2,"0")}-${(i.date.getDate()+"").padStart(2,"0")}</span>
+      </div>
+      ${i.today 
+        ? `<div class="happy-birthday">祝 ${i.name} 生日快乐！</div>`
+        : `
+      <div class="countdown">
+        <div class="time-unit"><div class="time-value">${i.day}</div><div class="time-label">天</div></div>
+        <div class="time-unit"><div class="time-value">${i.h}</div><div class="time-label">时</div></div>
+        <div class="time-unit"><div class="time-value">${i.m}</div><div class="time-label">分</div></div>
+        <div class="time-unit"><div class="time-value">${i.s}</div><div class="time-label">秒</div></div>
+      </div>
+      <div class="days-away">还有 ${i.day} 天</div>`
+      }
+    </div>
+  `).join("");
+}
+
+show();
+setInterval(show, 1000);
+</script>
+</body>
+</html>
