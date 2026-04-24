@@ -9,17 +9,20 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: "Microsoft YaHei", "SimSun", serif !important;
+            font-family: "Microsoft YaHei", "SimSun", sans-serif !important;
         }
         body {
             background: linear-gradient(135deg, #1a1a2e, #16213e);
             color: #fff;
             min-height: 100vh;
             padding: 20px;
+            overflow-x: hidden;
         }
         .container {
             max-width: 800px;
             margin: 0 auto;
+            position: relative;
+            z-index: 10;
         }
         h1 {
             text-align: center;
@@ -33,7 +36,7 @@
             padding: 20px;
             margin: 15px 0;
             backdrop-filter: blur(10px);
-            transition: all 0.2s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
         .name {
             font-size: 20px;
@@ -81,12 +84,16 @@
             font-size: 14px;
         }
         .happy-birthday {
-            font-size: 36px !important;
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 80px !important;
             font-weight: bold !important;
             color: #ff0000 !important;
             text-align: center;
-            padding: 20px 0;
-            text-shadow: 0 0 15px #ff6666;
+            z-index: 9999;
+            text-shadow: 0 0 20px #ffd700, 0 0 40px red;
         }
         .preview-btn {
             margin-top: 12px;
@@ -97,10 +104,6 @@
             border-radius: 8px;
             font-weight: bold;
             cursor: pointer;
-            transition: 0.2s;
-        }
-        .preview-btn:hover {
-            opacity: 0.9;
         }
         #fireworks {
             position: fixed;
@@ -111,18 +114,13 @@
             pointer-events: none;
             z-index: 999;
         }
-        /* 祝福语模块 */
-        .wish-section {
+        .wish-section, .dream-section {
             margin: 15px 0;
             display: flex;
             flex-direction: column;
             gap: 10px;
         }
-        .wish-title {
-            font-size: 15px;
-            color: #fff;
-        }
-        .wish-input {
+        .wish-input, .dream-input {
             padding: 10px 12px;
             border-radius: 8px;
             border: none;
@@ -134,33 +132,25 @@
             min-height: 70px;
             resize: vertical;
         }
-        .wish-btns {
+        .wish-btns, .dream-btns {
             display: flex;
             gap: 10px;
         }
-        .wish-btns button {
-            padding: 7px 14px;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .save-btn {
-            background: #4CAF50;
-            color: white;
-        }
-        .del-btn {
-            background: #f44336;
-            color: white;
-        }
-        .saved-wish {
+        .save-btn { background: #4CAF50; color: white; border:none; padding:6px 12px; border-radius:6px;cursor:pointer; }
+        .del-btn { background: #f44336; color: white; border:none; padding:6px 12px; border-radius:6px;cursor:pointer; }
+        .saved-wish, .saved-dream {
             color: #ffd700;
             font-size: 15px;
             padding: 10px;
             background: rgba(255,215,0,0.12);
             border-radius: 6px;
-            word-break: break-all;
             line-height: 1.5;
+        }
+        .bottom-fire {
+            position: absolute;
+            bottom: 0;
+            font-size: 30px;
+            pointer-events: none;
         }
         .wish-fall {
             position: absolute;
@@ -171,46 +161,76 @@
             white-space: nowrap;
             pointer-events: none;
         }
-        @keyframes fall {
-            to { top: 100%; opacity: 0; }
-        }
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        .music-btn {
+        @keyframes fall {to { top: 100%; opacity: 0; }}
+        @keyframes bottomRise {0%{transform:translateY(0);opacity: 1;}100%{transform:translateY(-80vh);opacity:0;}}
+        @keyframes rotate {from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+
+        .float-buttons {
             position: fixed;
             bottom: 30px;
             right: 30px;
+            display: flex;
+            gap: 15px;
+            z-index: 1000;
+        }
+        .music-btn, .album-btn {
             width: 60px;
             height: 60px;
             border-radius: 50%;
-            background: linear-gradient(45deg, #ffd700, #ff8c00);
             border: none;
             box-shadow: 0 0 15px rgba(255,215,0,0.5);
             cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
             font-size: 26px;
-            color: #000;
-            z-index: 99;
-            transition: all 0.3s ease;
         }
-        .music-btn.playing {
-            animation: rotate 8s linear infinite;
+        .music-btn {background: linear-gradient(45deg, #ffd700, #ff8c00);}
+        .album-btn {background: linear-gradient(45deg, #ff69b4, #ff1493);}
+        .music-btn.playing{animation:rotate 8s linear infinite;}
+
+        #albumModal {
+            display: none;
+            position: fixed;
+            top: 0;left: 0;
+            width: 100%;height: 100%;
+            background: #000;z-index:2000;
+            touch-action: pan-y;
         }
+        #albumImg {width:100%;height:100%;object-fit:contain;display:block;}
+        .album-close{
+            position:absolute;top:20px;right:20px;
+            width:50px;height:50px;border-radius:50%;
+            background:rgba(0,0,0,0.5);color:#fff;
+            font-size:30px;display:flex;align-items:center;justify-content:center;
+            cursor:pointer;z-index:2001;
+        }
+        .album-prev, .album-next {
+            position:absolute;top:50%;transform:translateY(-50%);
+            width:60px;height:60px;border-radius:50%;
+            background:rgba(255,255,255,0.2);color:#fff;
+            font-size:30px;display:flex;align-items:center;justify-content:center;
+            cursor:pointer;z-index:2001;border:none;
+        }
+        .album-prev {left:20px;}
+        .album-next {right:20px;}
     </style>
 </head>
 <body>
-
 <div id="fireworks"></div>
 
-<button class="music-btn" id="musicBtn">🔔</button>
+<div class="float-buttons">
+    <button class="music-btn" id="musicBtn">🔔</button>
+    <button class="album-btn" id="albumBtn">🖼️</button>
+</div>
 
-<audio id="birthdayMusic" loop>
-    <source src="Summer Salt - Another Piece of the Cake (1).mp3" type="audio/mpeg">
+<audio id="birthdayMusic" loop preload="auto">
+    <source src="陈奕迅 - Lonely Christmas.mp3" type="audio/mpeg">
 </audio>
+
+<div id="albumModal">
+    <div class="album-close" onclick="closeAlbum()">✕</div>
+    <button class="album-prev" onclick="prevImg()">←</button>
+    <img id="albumImg" src="">
+    <button class="album-next" onclick="nextImg()">→</button>
+</div>
 
 <div class="container">
     <h1>🎂 家人生日倒计时 🎂</h1>
@@ -235,85 +255,88 @@ const familyData = [
 
 let activeBirthdayPerson = null;
 const WISH_STORAGE_KEY = "family_birthday_wishes";
+const DREAM_STORAGE_KEY = "family_birthday_dreams";
 
-function getWishData() {
-    const data = localStorage.getItem(WISH_STORAGE_KEY);
-    return data ? JSON.parse(data) : {};
+const albumImages = [
+    "yuanyuan.jpg",
+    "yuanyuan1.jpg",
+    "jiajia.jpg",
+    "nannan.jpg",
+    "nuonuo.jpg",
+    "nuonuo1.jpg",
+    "nuonuo2.jpg",
+    "ruirui.jpg",
+    "yangyang.jpg",
+    "zeze.jpg",
+    "zeze2.jpg",
+    "img1.jpg",
+    "img2.jpg",
+    "img3.jpg",
+    "img4.jpg",
+    "img5.jpg",
+    "img6.jpg",
+    "img7.jpg",
+    "img8.jpg",
+    "img9.jpg",
+    "img10.jpg"
+];
+let currentAlbumIndex = 0;
+
+window.openAlbum = function(){
+    currentAlbumIndex = 0;
+    const m = document.getElementById('albumModal');
+    const img = document.getElementById('albumImg');
+    img.src = albumImages[currentAlbumIndex];
+    m.style.display = "block";
 }
-function saveWish(name) {
-    const input = document.getElementById(`wish-${name}`);
-    const text = input.value.trim();
-    const data = getWishData();
-    data[name] = text;
-    localStorage.setItem(WISH_STORAGE_KEY, JSON.stringify(data));
-    alert("祝福语保存成功！");
-    initPage(); // 保存后刷新列表显示“已保存”状态
+window.closeAlbum = function(){
+    document.getElementById('albumModal').style.display = "none";
 }
-function deleteWish(name) {
-    if(confirm("确定要删除祝福吗？")){
-        const data = getWishData();
-        delete data[name];
-        localStorage.setItem(WISH_STORAGE_KEY, JSON.stringify(data));
-        initPage();
+function nextImg(){
+    currentAlbumIndex++;
+    if(currentAlbumIndex >= albumImages.length) currentAlbumIndex = 0;
+    document.getElementById('albumImg').src = albumImages[currentAlbumIndex];
+}
+function prevImg(){
+    currentAlbumIndex--;
+    if(currentAlbumIndex < 0) currentAlbumIndex = albumImages.length - 1;
+    document.getElementById('albumImg').src = albumImages[currentAlbumIndex];
+}
+
+document.addEventListener('keydown', function(e){
+    if(document.getElementById('albumModal').style.display === 'block'){
+        if(e.key === 'ArrowLeft') prevImg();
+        if(e.key === 'ArrowRight') nextImg();
+    }
+});
+
+let startY = 0;
+document.getElementById("albumModal").addEventListener("touchstart",e=>startY=e.touches[0].clientY);
+document.getElementById("albumModal").addEventListener("touchend",e=>{
+    let endY = e.changedTouches[0].clientY;
+    if(startY - endY > 60) nextImg();
+    if(endY - startY > 60) prevImg();
+});
+
+function createBottomFireworks() {
+    const fw = document.getElementById('fireworks');
+    const colors = ['#ff0','#f00','#0f0','#0ff','#f0f','#ffd700','#ff8c00'];
+    const emojis = ['🎆','🎇','✨','🌟','💥'];
+    for(let i = 0; i <= 20; i++){
+        const bFire = document.createElement('div');
+        bFire.className = "bottom-fire";
+        bFire.style.left = `${i * 5}%`;
+        bFire.style.color = colors[Math.floor(Math.random() * colors.length)];
+        bFire.style.animation = `bottomRise ${Math.random() * 2 + 2.5}s ease-out forwards`;
+        bFire.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+        fw.appendChild(bFire);
     }
 }
-function getWish(name) {
-    return getWishData()[name] || "";
-}
-
-function getSolarNextBirthday(month, day) {
-    const now = new Date();
-    let bd = new Date(now.getFullYear(), month - 1, day);
-    if (bd < now) bd = new Date(now.getFullYear() + 1, month - 1, day);
-    return bd;
-}
-
-// 简易阴历转阳历估算（注意：如需极度精准建议引用专门的阴历库，这里保留你的原逻辑）
-function getLunarNextBirthday(lunarM, lunarD) {
-    const now = new Date();
-    const lunarBase = [15,14,15,15,16,15,16,15,16,15,15,15];
-    let m = lunarM;
-    let d = lunarD + lunarBase[m-1];
-    let year = now.getFullYear();
-    if(d>31){d-=31;m++;}
-    if(m>12){m-=12;year++;}
-    let bd = new Date(year, m-1, d);
-    if(bd<now){
-        year++;
-        bd = new Date(year, m-1, d);
-    }
-    return bd;
-}
-
-function getPersonNextBirthday(person) {
-    return person.solar 
-        ? getSolarNextBirthday(person.solarMonth, person.solarDay)
-        : getLunarNextBirthday(person.lunarMonth, person.lunarDay);
-}
-
-function getCountdownDiff(targetDate) {
-    const now = Date.now();
-    const diff = targetDate.getTime() - now;
-    if(diff <= 0) return {d:0,h:0,m:0,s:0};
-    return {
-        d: Math.floor(diff / 86400000),
-        h: Math.floor((diff % 86400000) / 3600000),
-        m: Math.floor((diff % 3600000) / 60000),
-        s: Math.floor((diff % 60000) / 1000)
-    };
-}
-
-function getRemainDays(targetDate) {
-    const now = new Date();
-    return Math.ceil((targetDate.getTime() - now.getTime()) / 86400000);
-}
-
 function createFireworks(wishText = "") {
     const fw = document.getElementById('fireworks');
-    fw.innerHTML = '';
     const colors = ['#ff0','#f00','#0f0','#0ff','#f0f','#fff','#ffd700'];
     const symbols = ['💰','🪙','🧧','💴'];
-    for(let i=0; i<150; i++) {
+    for(let i=0; i<120; i++) {
         const div = document.createElement('div');
         div.style.cssText = `
             position:absolute;
@@ -336,101 +359,127 @@ function createFireworks(wishText = "") {
         el.style.animation = `fall 5s ease-in forwards`;
         fw.appendChild(el);
     }
+    createBottomFireworks();
 }
 
-function initPage() {
-    const container = document.getElementById("birthdayList");
-    container.innerHTML = "";
-    const sortedList = familyData.map(p => {
-        const bd = getPersonNextBirthday(p);
-        return { ...p, bd, days: getRemainDays(bd) };
-    }).sort((a, b) => a.days - b.days);
-
-    sortedList.forEach(p => {
-        const cd = getCountdownDiff(p.bd);
-        const wish = getWish(p.name);
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.dataset.name = p.name;
-        
-        const dateText = p.solar ? `阳历 ${p.solarMonth}月${p.solarDay}日` : `阴历 ${p.lunarMonth}月${p.lunarDay}日`;
-
-        card.innerHTML = `
-            <div class="name">${p.name}</div>
-            <div class="info">
-                <span>${dateText}</span>
-                <span>下次生日：${p.bd.getFullYear()}-${p.bd.getMonth()+1}-${p.bd.getDate()}</span>
-            </div>
-            <div class="wish-section">
-                <textarea class="wish-input" id="wish-${p.name}" placeholder="写下对${p.name}的祝福...">${wish}</textarea>
-                <div class="wish-btns">
-                    <button class="save-btn" onclick="saveWish('${p.name}')">保存祝福</button>
-                    <button class="del-btn" onclick="deleteWish('${p.name}')">清空</button>
-                </div>
-                ${wish ? `<div class="saved-wish">💌 已保存：${wish}</div>` : ''}
-            </div>
-            <div class="content-wrap">
-                <div class="countdown">
-                    <div class="time-unit"><div class="time-value d">${cd.d}</div><div class="time-label">天</div></div>
-                    <div class="time-unit"><div class="time-value h">${cd.h}</div><div class="time-label">时</div></div>
-                    <div class="time-unit"><div class="time-value m">${cd.m}</div><div class="time-label">分</div></div>
-                    <div class="time-unit"><div class="time-value s">${cd.s}</div><div class="time-label">秒</div></div>
-                </div>
-            </div>
-            <div class="days-away">距离生日还有 ${p.days} 天</div>
-            <button class="preview-btn" onclick="toggleBirthday('${p.name}')">预览生日祝福特效</button>
-        `;
-        container.appendChild(card);
-    });
-}
-
-function toggleBirthday(name) {
-    const music = document.getElementById('birthdayMusic');
-    const musicBtn = document.getElementById('musicBtn');
+window.toggleBirthday = function(name){
+    const card = document.querySelector(`.card[data-name="${name}"]`);
+    const btn = card.querySelector('.preview-btn');
     
     if(activeBirthdayPerson === name){
         activeBirthdayPerson = null;
+        document.getElementById('fireworks').innerHTML = '';
+        document.querySelector('.happy-birthday')?.remove();
+        btn.innerText = '预览生日特效';
         initPage();
     }else{
         activeBirthdayPerson = name;
-        createFireworks(getWish(name));
-        music.currentTime = 0;
-        music.play().catch(e => console.log("需用户交互后播放"));
-        musicBtn.classList.add('playing');
+        document.getElementById('fireworks').innerHTML = '';
+        document.querySelector('.happy-birthday')?.remove();
         
-        const card = document.querySelector(`.card[data-name="${name}"]`);
-        card.querySelector('.content-wrap').innerHTML = `<div class="happy-birthday">🎂 祝${name}生日快乐！ 🎂</div>`;
-        card.querySelector('.preview-btn').innerText = '返回倒计时';
+        const wish = getWishData()[name] || "";
+        createFireworks(wish);
+        
+        const text = document.createElement('div');
+        text.className = 'happy-birthday';
+        text.textContent = `🎉 祝${name}生日快乐 🎉`;
+        document.body.appendChild(text);
+        
+        btn.innerText = '返回倒计时';
+    }
+};
+
+function getWishData(){let d=localStorage.getItem(WISH_STORAGE_KEY);return d?JSON.parse(d):{}}
+function getDreamData(){let d=localStorage.getItem(DREAM_STORAGE_KEY);return d?JSON.parse(d):{}}
+window.saveWish=function(n){let i=document.getElementById(`wish-${n}`).value.trim();let o=getWishData();o[n]=i;localStorage.setItem(WISH_STORAGE_KEY,JSON.stringify(o));initPage();alert("保存成功");}
+window.deleteWish=function(n){if(confirm("确定清空？")){let o=getWishData();delete o[n];localStorage.setItem(WISH_STORAGE_KEY,JSON.stringify(o));initPage();}}
+window.saveDream=function(n){let i=document.getElementById(`dream-${n}`).value.trim();let o=getDreamData();o[n]=i;localStorage.setItem(DREAM_STORAGE_KEY,JSON.stringify(o));initPage();alert("保存成功");}
+window.deleteDream=function(n){if(confirm("确定清空？")){let o=getDreamData();delete o[n];localStorage.setItem(DREAM_STORAGE_KEY,JSON.stringify(o));initPage();}}
+
+function getSolarBirthday(m,d){
+    let now=new Date();
+    let bd=new Date(now.getFullYear(),m-1,d);
+    if(bd<now)bd=new Date(now.getFullYear()+1,m-1,d);
+    return bd;
+}
+function getLunarBirthday(lm,ld){
+    let now=new Date();
+    let y=now.getFullYear();
+    let bd=new Date(y,lm-1,ld+15);
+    if(bd<now)bd=new Date(y+1,lm-1,ld+15);
+    return bd;
+}
+function getDiff(time){
+    let d=time-Date.now();
+    return{
+        d:Math.floor(d/86400000),
+        h:Math.floor((d % 86400000) / 3600000),
+        m:Math.floor((d % 3600000) / 60000),
+        s:Math.floor((d % 60000) / 1000)
     }
 }
 
-const musicBtn = document.getElementById('musicBtn');
-const music = document.getElementById('birthdayMusic');
-musicBtn.addEventListener('click', () => {
-    if(music.paused){
-        music.play();
-        musicBtn.classList.add('playing');
-    }else{
-        music.pause();
-        musicBtn.classList.remove('playing');
-    }
-});
+function initPage(){
+    let wrap=document.getElementById("birthdayList");
+    wrap.innerHTML="";
+    let list=familyData.map(item=>{
+        let bd=item.solar?getSolarBirthday(item.solarMonth,item.solarDay):getLunarBirthday(item.lunarMonth,item.lunarDay);
+        return {...item,bd,day:Math.ceil((bd.getTime()-Date.now())/86400000)}
+    }).sort((a,b)=>a.day-b.day);
+
+    list.forEach(p=>{
+        let cd=getDiff(p.bd);
+        let wish=getWishData()[p.name]||"";
+        let dream=getDreamData()[p.name]||"";
+        let dateStr=p.solar?`阳历${p.solarMonth}月${p.solarDay}日`:`阴历${p.lunarMonth}月${p.lunarDay}日`;
+        let card=document.createElement("div");
+        card.className="card";
+        card.dataset.name = p.name;
+        card.innerHTML=`
+            <div class="name">${p.name}</div>
+            <div class="info"><span>${dateStr}</span><span>下次：${p.bd.getFullYear()}-${p.bd.getMonth()+1}-${p.bd.getDate()}</span></div>
+            <div class="wish-section">
+                <textarea class="wish-input" id="wish-${p.name}" placeholder="写下祝福">${wish}</textarea>
+                <div class="wish-btns"><button class="save-btn" onclick="saveWish('${p.name}')">保存</button><button class="del-btn" onclick="deleteWish('${p.name}')">清空</button></div>
+                ${wish?`<div class="saved-wish">${wish}</div>`:""}
+            </div>
+            <div class="dream-section">
+                <textarea class="dream-input" id="dream-${p.name}" placeholder="写下心愿">${dream}</textarea>
+                <div class="dream-btns"><button class="save-btn" onclick="saveDream('${p.name}')">保存</button><button class="del-btn" onclick="deleteDream('${p.name}')">清空</button></div>
+                ${dream?`<div class="saved-dream">${dream}</div>`:""}
+            </div>
+            <div class="countdown">
+                <div class="time-unit"><div class="time-value d">${cd.d}</div><div class="time-label">天</div></div>
+                <div class="time-unit"><div class="time-value h">${cd.h}</div><div class="time-label">时</div></div>
+                <div class="time-unit"><div class="time-value m">${cd.m}</div><div class="time-label">分</div></div>
+                <div class="time-unit"><div class="time-value s">${cd.s}</div><div class="time-label">秒</div></div>
+            </div>
+            <div class="days-away">还有 ${p.day} 天</div>
+            <button class="preview-btn" onclick="toggleBirthday('${p.name}')">预览生日特效</button>
+        `;
+        wrap.appendChild(card);
+    })
+}
+
+document.getElementById("albumBtn").onclick=openAlbum;
+const music=document.getElementById("birthdayMusic");
+document.getElementById("musicBtn").onclick=function(){
+    if(music.paused){music.play();this.classList.add("playing");}
+    else{music.pause();this.classList.remove("playing");}
+}
 
 setInterval(() => {
     if(!activeBirthdayPerson) {
-        const cards = document.querySelectorAll('.card');
-        cards.forEach(card => {
+        document.querySelectorAll('.card').forEach(card => {
             const name = card.dataset.name;
             const person = familyData.find(f => f.name === name);
-            const bd = getPersonNextBirthday(person);
-            const cd = getCountdownDiff(bd);
-            const dEl = card.querySelector('.d');
-            if(dEl){
-                card.querySelector('.d').innerText = cd.d;
-                card.querySelector('.h').innerText = cd.h;
-                card.querySelector('.m').innerText = cd.m;
-                card.querySelector('.s').innerText = cd.s;
-            }
+            const bd = person.solar ? getSolarBirthday(person.solarMonth, person.solarDay) : getLunarBirthday(person.lunarMonth, person.lunarDay);
+            const cd = getDiff(bd);
+            
+            card.querySelector('.d').innerText = cd.d;
+            card.querySelector('.h').innerText = cd.h;
+            card.querySelector('.m').innerText = cd.m;
+            card.querySelector('.s').innerText = cd.s;
         });
     }
 }, 1000);
